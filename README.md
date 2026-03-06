@@ -14,15 +14,16 @@ The getting started guide walks you through running the add-in locally using the
 
 ### PowerPoint
 
-https://github.com/user-attachments/assets/8ab56d45-32f7-46f1-a5c9-cc63824080c2
+https://github.com/user-attachments/assets/4c2731e4-e157-4968-842f-e496a6e8ed8b
 
 ### Excel
 
-https://github.com/user-attachments/assets/0e35378b-d917-4068-978a-63443597be24
+
+https://github.com/user-attachments/assets/42478d69-fd26-415e-8ef7-4efe8450d695
 
 ### Word
 
-https://github.com/user-attachments/assets/be8893b0-83a5-4447-b213-d2605d360131
+https://github.com/user-attachments/assets/41408f8d-a9b8-45b6-a826-f50931c7c249
 
 ## Project Structure
 

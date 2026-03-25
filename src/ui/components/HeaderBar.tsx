@@ -1,17 +1,19 @@
 import * as React from "react";
 import { Button, Tooltip, Switch, makeStyles, Dropdown, Option, tokens } from "@fluentui/react-components";
-import { Compose24Regular, History24Regular } from "@fluentui/react-icons";
+import { Compose24Regular, History24Regular, SlideLayout24Regular } from "@fluentui/react-icons";
 
 export type ModelType = string;
 
 interface HeaderBarProps {
   onNewChat: () => void;
   onShowHistory: () => void;
+  onShowTemplates: () => void;
   selectedModel: ModelType;
   onModelChange: (model: ModelType) => void;
   models: { key: string; label: string }[];
   debugEnabled: boolean;
   onDebugChange: (v: boolean) => void;
+  activeTemplateName?: string | null;
 }
 
 const useStyles = makeStyles({
@@ -19,8 +21,8 @@ const useStyles = makeStyles({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "8px 12px",
-    paddingRight: "40px",
+    padding: "0px 0px",
+    paddingRight: "44px",
     gap: "8px",
     minHeight: "40px",
   },
@@ -59,20 +61,17 @@ const useStyles = makeStyles({
     height: "28px",
     padding: "0",
   },
-  clearButton: {
-    backgroundColor: "#0078d4",
-    color: "white",
-    borderRadius: "4px",
-    padding: "4px",
+  primaryIconButton: {
+    minWidth: "28px",
     width: "28px",
     height: "28px",
-    minWidth: "28px",
-    border: "none",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    padding: "0",
+    backgroundColor: "#0078d4",
+    color: "white",
+    borderRadius: "10px",
     ":hover": {
       backgroundColor: "#106ebe",
+      color: "white",
     },
   },
 });
@@ -80,11 +79,13 @@ const useStyles = makeStyles({
 export const HeaderBar: React.FC<HeaderBarProps> = ({
   onNewChat,
   onShowHistory,
+  onShowTemplates,
   selectedModel,
   onModelChange,
   models,
   debugEnabled,
   onDebugChange,
+  activeTemplateName,
 }) => {
   const styles = useStyles();
   const selectedLabel = models.find(m => m.key === selectedModel)?.label || selectedModel;
@@ -122,6 +123,16 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         )}
       </div>
       <div className={styles.buttonGroup}>
+        <Tooltip content={activeTemplateName ? `Template: ${activeTemplateName}` : "Template Library"} relationship="label">
+          <Button
+            icon={<SlideLayout24Regular />}
+            appearance="subtle"
+            onClick={onShowTemplates}
+            aria-label="Template Library"
+            className={styles.iconButton}
+            style={activeTemplateName ? { color: tokens.colorBrandForeground1 } : undefined}
+          />
+        </Tooltip>
         <Tooltip content="History" relationship="label">
           <Button
             icon={<History24Regular />}
@@ -134,9 +145,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         <Tooltip content="New chat" relationship="label">
           <Button
             icon={<Compose24Regular />}
+            appearance="subtle"
             onClick={onNewChat}
             aria-label="New chat"
-            className={styles.clearButton}
+            className={styles.primaryIconButton}
           />
         </Tooltip>
       </div>

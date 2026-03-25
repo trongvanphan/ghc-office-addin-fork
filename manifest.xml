@@ -5,13 +5,12 @@
   xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="TaskPaneApp">
   <Id>12345678-1234-1234-1234-123456789012</Id>
   <Version>1.0.0.0</Version>
-  <ProviderName>Your Company</ProviderName>
+  <ProviderName>FHM.AI-HUB</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="GitHub Copilot"/>
   <Description DefaultValue="An Office add-in with a ribbon button"/>
   <IconUrl DefaultValue="https://localhost:52390/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:52390/icon-64.png"/>
-  <SupportUrl DefaultValue="https://www.contoso.com/help"/>
   <AppDomains>
     <AppDomain>https://localhost:52390</AppDomain>
   </AppDomains>

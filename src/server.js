@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { setupCopilotProxy } = require('./copilotProxy');
+const { createTemplateRouter } = require('./templateRoutes');
 
 async function createServer() {
   const app = express();
@@ -145,6 +146,7 @@ async function createServer() {
   });
 
   app.use('/api', apiRouter);
+  app.use('/api/templates', createTemplateRouter());
 
   // ========== Vite Dev Server (Frontend) ==========
   

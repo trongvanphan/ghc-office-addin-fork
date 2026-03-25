@@ -27,6 +27,8 @@ import { applyStyleToSelection } from "./applyStyleToSelection";
 import { getSlideNotes } from "./getSlideNotes";
 import { setSlideNotes } from "./setSlideNotes";
 import { duplicateSlide } from "./duplicateSlide";
+import { getTemplateInfo } from "./getTemplateInfo";
+import { insertTemplateSlide } from "./insertTemplateSlide";
 
 // New Excel tools
 import { getWorkbookOverview } from "./getWorkbookOverview";
@@ -59,6 +61,8 @@ export const powerpointTools = [
   updateSlideShape,
   setSlideNotes,
   duplicateSlide,
+  getTemplateInfo,
+  insertTemplateSlide,
 ];
 
 export const excelTools = [

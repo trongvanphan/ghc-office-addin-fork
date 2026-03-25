@@ -9,19 +9,22 @@ import { ChatInput, ImageAttachment } from "./components/ChatInput";
 import { Message, MessageList, DebugEvent } from "./components/MessageList";
 import { HeaderBar, ModelType } from "./components/HeaderBar";
 import { SessionHistory } from "./components/SessionHistory";
+import { TemplateManager } from "./components/TemplateManager";
 import { useIsDarkMode } from "./useIsDarkMode";
 import { useLocalStorage } from "./useLocalStorage";
 import { createWebSocketClient, ModelInfo } from "./lib/websocket-client";
 import { getToolsForHost } from "./tools";
 import { remoteLog } from "./lib/remoteLog";
 import { trafficStats } from "./lib/websocket-transport";
-import { 
-  SavedSession, 
-  OfficeHost, 
-  saveSession, 
-  generateSessionTitle, 
-  getHostFromOfficeHost 
+import {
+  SavedSession,
+  OfficeHost,
+  saveSession,
+  generateSessionTitle,
+  getHostFromOfficeHost,
 } from "./sessionStorage";
+import type { TemplateMetadata } from "./templateStorage";
+import { getActiveTemplateId, setActiveTemplateId } from "./templateStorage";
 import React from "react";
 
 const useStyles = makeStyles({
@@ -67,13 +70,30 @@ export const App: React.FC = () => {
   const [error, setError] = useState("");
   const [selectedModel, setSelectedModel] = useLocalStorage<ModelType>("word-addin-selected-model", "");
   const [showHistory, setShowHistory] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string>("");
   const [officeHost, setOfficeHost] = useState<OfficeHost>("word");
   const [debugEnabled, setDebugEnabled] = useLocalStorage<boolean>("copilot-debug", false);
+  const [activeTemplate, setActiveTemplate] = useState<TemplateMetadata | null>(null);
   const isDarkMode = useIsDarkMode();
-  
+
   // Track session creation time
   const sessionCreatedAt = useRef<string>("");
+
+  // Load persisted active template ID on mount
+  useEffect(() => {
+    const storedId = getActiveTemplateId();
+    if (!storedId) return;
+    fetch(`/api/templates/${encodeURIComponent(storedId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((meta) => {
+        if (meta) {
+          const { data: _data, ...rest } = meta;
+          setActiveTemplate(rest);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Permission handler: always approve (read-only builtins are safe)
   const handlePermissionRequest = useCallback(
@@ -148,6 +168,7 @@ export const App: React.FC = () => {
     setStreamingText("");
     setError("");
     setShowHistory(false);
+    setShowTemplates(false);
     
     try {
       if (client) {
@@ -168,6 +189,21 @@ export const App: React.FC = () => {
         : host === Office.HostType.Excel ? "Excel" 
         : "Office";
       
+      // Snapshot active template at session creation time
+      const templateAtStart = activeTemplate;
+
+      const templateSection =
+        host === Office.HostType.PowerPoint && templateAtStart
+          ? `
+ACTIVE TEMPLATE: "${templateAtStart.name}" (id: ${templateAtStart.id})
+The user has selected a PowerPoint template. When creating slides:
+1. Call get_template_info with templateId="${templateAtStart.id}" to see available slide types.
+2. Call insert_template_slide for each slide you want to add (use the correct slideType).
+3. Use update_slide_shape after insertion to replace placeholder text with actual content.
+Available slide types in this template: ${templateAtStart.slides.map((s) => s.type).filter((t) => t !== "other").join(", ") || "(not tagged yet — call get_template_info to check)"}
+Do NOT use add_slide_from_code when a template is active — always use insert_template_slide instead.`
+          : "";
+
       const systemMessage = {
         mode: "replace" as const,
         content: `You are a helpful AI assistant embedded inside Microsoft ${hostName} as an Office Add-in. You have direct access to the open ${hostName} document through the tools provided.
@@ -178,19 +214,19 @@ ${host === Office.HostType.PowerPoint ? `For PowerPoint:
 - Use get_presentation_overview first to see all slides and understand the deck structure
 - Use get_presentation_content to read slide text (supports ranges like startIndex/endIndex for large decks)
 - Use get_slide_image to capture a slide's visual design, colors, and layout
-- The presentation is already open - just call the tools directly` : ''}
-
+- The presentation is already open - just call the tools directly` : ""}
+${templateSection}
 ${host === Office.HostType.Word ? `For Word:
 - Use get_document_content to read the document
 - Use set_document_content to modify it
-- The document is already open - just call the tools directly` : ''}
+- The document is already open - just call the tools directly` : ""}
 
 ${host === Office.HostType.Excel ? `For Excel:
 - Use get_workbook_info to understand the workbook structure
 - Use get_workbook_content to read cell data
-- The workbook is already open - just call the tools directly` : ''}
+- The workbook is already open - just call the tools directly` : ""}
 
-Always use your tools to interact with the document. Never ask users to save, export, or provide file paths.`
+Always use your tools to interact with the document. Never ask users to save, export, or provide file paths.`,
       };
 
       const toolNames = tools.map(t => t.name);
@@ -390,6 +426,12 @@ Always use your tools to interact with the document. Never ask users to save, ex
     }
   };
 
+  const handleTemplateSelect = (template: TemplateMetadata | null) => {
+    setActiveTemplate(template);
+    setActiveTemplateId(template?.id ?? null);
+    setShowTemplates(false);
+  };
+
   // Show history panel
   if (showHistory) {
     return (
@@ -403,17 +445,32 @@ Always use your tools to interact with the document. Never ask users to save, ex
     );
   }
 
+  // Show template manager panel (PowerPoint only)
+  if (showTemplates) {
+    return (
+      <FluentProvider theme={isDarkMode ? webDarkTheme : webLightTheme}>
+        <TemplateManager
+          activeTemplateId={activeTemplate?.id ?? null}
+          onClose={() => setShowTemplates(false)}
+          onSelectTemplate={handleTemplateSelect}
+        />
+      </FluentProvider>
+    );
+  }
+
   return (
     <FluentProvider theme={isDarkMode ? webDarkTheme : webLightTheme}>
       <div className={styles.container}>
-        <HeaderBar 
-          onNewChat={() => startNewSession(selectedModel)} 
+        <HeaderBar
+          onNewChat={() => startNewSession(selectedModel)}
           onShowHistory={() => setShowHistory(true)}
+          onShowTemplates={() => setShowTemplates(true)}
           selectedModel={selectedModel}
           onModelChange={handleModelChange}
           models={availableModels}
           debugEnabled={debugEnabled}
           onDebugChange={setDebugEnabled}
+          activeTemplateName={officeHost === "powerpoint" ? activeTemplate?.name : null}
         />
 
         <MessageList

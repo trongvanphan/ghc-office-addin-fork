@@ -8,6 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { setupCopilotProxy } = require('./copilotProxy');
+const { createTemplateRouter } = require('./templateRoutes');
 
 // Determine if we're running from pkg bundle
 const isPkg = typeof process.pkg !== 'undefined';
@@ -106,6 +107,7 @@ async function createServer() {
   });
 
   app.use('/api', apiRouter);
+  app.use('/api/templates', createTemplateRouter());
 
   // ========== Static File Serving ==========
   const distPath = path.join(BASE_PATH, 'dist');

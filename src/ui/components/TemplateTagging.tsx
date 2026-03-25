@@ -29,7 +29,8 @@ const useStyles = makeStyles({
   container: {
     display: "flex",
     flexDirection: "column",
-    height: "100%",
+    height: "100vh",
+    overflow: "hidden",
     backgroundColor: "var(--colorNeutralBackground2)",
   },
   header: {

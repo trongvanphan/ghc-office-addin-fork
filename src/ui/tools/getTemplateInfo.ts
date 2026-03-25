@@ -25,8 +25,24 @@ The returned slideIndex for each slide is used when calling insert_template_slid
     try {
       const res = await fetch(`/api/templates/${encodeURIComponent(templateId)}`);
       if (!res.ok) {
+        // templateId might be wrong/guessed — list all templates to help the model
+        let available = "";
+        try {
+          const listRes = await fetch("/api/templates");
+          if (listRes.ok) {
+            const templates: Array<{ id: string; name: string; slideCount: number }> = await listRes.json();
+            if (templates.length > 0) {
+              available = "\n\nAvailable templates:\n" + templates
+                .map(t => `  - id="${t.id}" name="${t.name}" (${t.slideCount} slides)`)
+                .join("\n");
+              available += "\n\nPlease retry get_template_info with the correct id from the list above.";
+            } else {
+              available = "\n\nNo templates are uploaded yet. Ask the user to upload one via Template Library.";
+            }
+          }
+        } catch {}
         return {
-          textResultForLlm: `Template not found (id: ${templateId}). Ask the user to select a template from the Template Library.`,
+          textResultForLlm: `Template not found (id: "${templateId}"). The id passed does not match any stored template.${available}`,
           resultType: "failure",
           error: "Template not found",
           toolTelemetry: {},

@@ -41,6 +41,11 @@ const useStyles = makeStyles({
     "::after": {
       display: "none !important",
     },
+    "> textarea": {
+      maxHeight: "40vh",
+      overflowY: "auto",
+      resize: "none",
+    },
   },
   sendButton: {
     width: "40px",
@@ -103,6 +108,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     if (value === "") {
       inputRef.current?.focus();
     }
+  }, [value]);
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const maxHeight = window.innerHeight * 0.4;
+    el.style.height = Math.min(el.scrollHeight, maxHeight) + "px";
+    el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
   }, [value]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -171,6 +185,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         onPaste={handlePaste}
         placeholder="Type a message... (paste images with Ctrl+V)"
         rows={2}
+        resize="none"
       />
       <Tooltip content="Send message" relationship="label">
         <Button

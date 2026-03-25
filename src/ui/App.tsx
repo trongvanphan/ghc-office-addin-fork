@@ -189,8 +189,22 @@ export const App: React.FC = () => {
         : host === Office.HostType.Excel ? "Excel" 
         : "Office";
       
-      // Snapshot active template at session creation time
-      const templateAtStart = activeTemplate;
+      // Snapshot active template at session creation time.
+      // If state hasn't loaded yet (async fetch not complete), try fetching directly.
+      let templateAtStart = activeTemplate;
+      if (!templateAtStart && host === Office.HostType.PowerPoint) {
+        const storedId = getActiveTemplateId();
+        if (storedId) {
+          try {
+            const r = await fetch(`/api/templates/${encodeURIComponent(storedId)}`);
+            if (r.ok) {
+              const { data: _data, ...rest } = await r.json();
+              templateAtStart = rest;
+              setActiveTemplate(rest);
+            }
+          } catch {}
+        }
+      }
 
       const templateSection =
         host === Office.HostType.PowerPoint && templateAtStart
